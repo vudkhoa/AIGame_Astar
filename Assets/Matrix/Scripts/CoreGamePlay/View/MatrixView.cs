@@ -4,7 +4,6 @@ namespace CoreGamePlay.View
 
     public class MatrixView : MonoBehaviour
     {
-        
-        
+
     }
 }

@@ -1,11 +1,12 @@
 namespace Data 
 {
+    using CustomUtils;
     using System.Collections.Generic;
     using UnityEngine;
 
-    public class MatrixData : MonoBehaviour
+    public class MatrixData : SingletonMono<MatrixData>
     {
-        public int[,] map = new int[8, 16]
+        private int[,] map1 = new int[8, 16]
         {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
             {1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1},
@@ -17,11 +18,11 @@ namespace Data
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
         };
 
-        public List<int[,]> MapList;
+        public List<int[,]> MapList = new List<int[,]>();
 
-        private void Init()
+        protected override void Awake()
         {
-            MapList.Add(map);
+            MapList.Add(map1);
         }
 
         public int[,] GetMap(int levelIndex)
