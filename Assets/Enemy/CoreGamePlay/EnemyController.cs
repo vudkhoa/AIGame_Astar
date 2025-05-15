@@ -6,7 +6,6 @@
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Reflection;
     using UnityEngine;
 
     public enum Direction
@@ -38,26 +37,7 @@
         public EnemyView enemyViewPrefab;
         public RectTransform parent;
         public List<EnemyModel> EnemyModelList;
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.W))
-            {
-                Move(Direction.Up, 0);
-            }
-            else if (Input.GetKeyDown(KeyCode.S))
-            {
-                Move(Direction.Down, 0);
-            }
-            else if (Input.GetKeyDown(KeyCode.A))
-            {
-                Move(Direction.Left, 0);
-            }
-            else if (Input.GetKeyDown(KeyCode.D))
-            {
-                Move(Direction.Right, 0);
-            }
-        }
+        private bool _isMoving = false;
 
         public void SpawnEnemy()
         {
@@ -76,6 +56,7 @@
             }
             newPos.x += 1;
             newPos.y += 1;
+
             enemyView.SetPosition(newPos);
 
             // Model
@@ -83,13 +64,26 @@
             enemyModel.Init(enemyView, newPos);
             EnemyModelList.Add(enemyModel);
 
+            //List<Vector2Int> path = this.AStar(posDirection, new Vector2Int(10, 30));
+            //StartCoroutine(MovePath(path));
+        }
+
+        public void FocusPlayer(Vector2Int posPlayer)
+        {
             Vector2Int posDirection = this.EnemyModelList[0].Position;
-            //Debug.Log(posDirection);
+            List<Vector2Int> path = this.AStar(posDirection, posPlayer);
 
-            List<Vector2Int> path = this.AStar(posDirection, new Vector2Int(10, 30));
+            Debug.Log(posDirection + " " + posPlayer);
 
-            //Debug.Log(path.Count);
-            StartCoroutine(MovePath(path));
+            if (this._isMoving)
+            {
+                StopAllCoroutines();
+            }
+
+            if (path != null)
+            {
+                StartCoroutine(MovePath(path));
+            }
         }
 
         public List<Vector2Int> AStar(Vector2Int start, Vector2Int goal)
@@ -172,7 +166,6 @@
         public Vector2Int Actions(Direction dir, Vector2Int pos)
         {
             Vector2Int posDirection = new Vector2Int(0, 0);
-            //Debug.Log(dir);
 
             switch (dir)
             {
@@ -191,7 +184,6 @@
             }
 
             Vector2Int newPos = pos + posDirection;
-            //Debug.Log(newPos.x + " " + newPos.y);
             if (newPos.x < 0 && newPos.y < 0) return new Vector2Int(-1, -1);
             if (MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y - 1].Type == 1) 
                 return new Vector2Int(-1, -1);
@@ -202,16 +194,17 @@
 
         IEnumerator MovePath(List<Vector2Int> path)
         {
+            this._isMoving = true;
             for (int i = path.Count - 1; i >= 0; i--) 
             {
                 Vector2Int newPos = path[i]; 
                 if (MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y - 1].Type != 1)
                 {
-                    //Debug.Log(path[i]);
                     this.EnemyModelList[0].SetPosition(newPos);
                     yield return new WaitForSeconds(0.2f);
                 }
             }
+            this._isMoving = false;
         }
 
         public void Move(Direction dir, int index)

@@ -54,6 +54,7 @@ namespace CoreGamePlay.Controller
                 }
             }
             EnemyController.Instance.SpawnEnemy();
+            PlayerController.Instance.SpawnPlayer();
         }
     }
 }
