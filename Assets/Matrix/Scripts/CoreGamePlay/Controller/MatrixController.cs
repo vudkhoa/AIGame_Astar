@@ -2,11 +2,11 @@ namespace CoreGamePlay.Controller
 {
     using CoreGamePlay.Model;
     using CoreGamePlay.View;
+    using CustomUtils;
     using Data;
-    using Unity.VisualScripting;
     using UnityEngine;
 
-    public class MatrixController : MonoBehaviour
+    public class MatrixController : SingletonMono<MatrixController>
     {
         [Header("Matrix")]
         public MatrixElementModel[,] MatrixElementModelList;
@@ -31,25 +31,29 @@ namespace CoreGamePlay.Controller
 
             this.MatrixElementModelList = new MatrixElementModel[Size.x, Size.y];
 
+            //Debug.Log(Size.x + " " + Size.y);
+
             for (int i = 0; i < Size.x; ++i)
             {
                 for (int j = 0; j < Size.y; ++j)
                 {
                     // Set View
                     MatrixElementView elementView =  Instantiate(MatrixElementPrefab, MatrixElementParent);
-                    if (map[i, j] == 1)
-                    {
-                        elementView.SetColor(1);
-                    }
+                    //if (map[i, j] == 1)
+                    //{
+                    //    elementView.SetColor(1);
+                    //}
 
                     // Set Model
                     MatrixElementModel elementModel = new MatrixElementModel();
                     elementModel.Init(new Vector2Int(i, j), elementView);
+                    elementModel.SetType(map[i, j]);
 
                     // Add to List
                     this.MatrixElementModelList[i, j] = elementModel;
                 }
             }
+            EnemyController.Instance.SpawnEnemy();
         }
     }
 }
