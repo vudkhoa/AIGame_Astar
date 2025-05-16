@@ -16,9 +16,7 @@ public class PlayerModel
     public bool Move(Vector2Int direction)
     {
         Vector2Int position = this.gridPosition + direction;
-
         if (MatrixController.Instance.MatrixElementModelList[position.x, position.y].Type == 1) return false;
-
         this.gridPosition = position;
         return true;
     }

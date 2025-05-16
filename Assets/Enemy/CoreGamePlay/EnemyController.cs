@@ -1,7 +1,7 @@
 ﻿namespace CoreGamePlay.Controller
 {
     using CoreGamePlay.View;
-    using CoreGmePlay.Model;
+    using CoreGamePlay.Model;
     using CustomUtils;
     using System.Collections;
     using System.Collections.Generic;
@@ -13,7 +13,11 @@
         Up = 1,
         Down = 2, 
         Left = 3, 
-        Right = 4, 
+        Right = 4,
+        UpLeft = 5,
+        UpRight = 6,
+        DownLeft = 7,
+        DownRight = 8,
         None = 0
     }
 
@@ -37,7 +41,16 @@
         public EnemyView enemyViewPrefab;
         public RectTransform parent;
         public List<EnemyModel> EnemyModelList;
+        public int SizeEnemyModelList;
         private bool _isMoving = false;
+
+        public void SpawnListEnemy()
+        {
+            for (int i = 0; i < SizeEnemyModelList; ++i)
+            {
+                this.SpawnEnemy();
+            }
+        }
 
         public void SpawnEnemy()
         {
@@ -63,27 +76,34 @@
             EnemyModel enemyModel = new EnemyModel();
             enemyModel.Init(enemyView, newPos);
             EnemyModelList.Add(enemyModel);
-
-            //List<Vector2Int> path = this.AStar(posDirection, new Vector2Int(10, 30));
-            //StartCoroutine(MovePath(path));
         }
 
-        public void FocusPlayer(Vector2Int posPlayer)
+        public void AllFocusPlayer(Vector2Int posPlayer)
         {
-            Vector2Int posDirection = this.EnemyModelList[0].Position;
-            List<Vector2Int> path = this.AStar(posDirection, posPlayer);
-
-            Debug.Log(posDirection + " " + posPlayer);
-
             if (this._isMoving)
             {
                 StopAllCoroutines();
             }
 
+            for (int i = 0; i < SizeEnemyModelList; ++i)
+            {
+                this.FocusPlayer(i, this.EnemyModelList[i].Position, posPlayer);
+            }
+        }
+
+        public void FocusPlayer(int index, Vector2Int posEnemy, Vector2Int posPlayer)
+        {
+            List<Vector2Int> path = this.AStar(posEnemy, posPlayer);
+
             if (path != null)
             {
-                StartCoroutine(MovePath(path));
+                StartCoroutine(MovePath(index, path));
             }
+        }
+
+        public float EuclideanDistance(Vector2 pos1, Vector2 pos2)
+        {
+            return Vector2.Distance(pos1, pos2);
         }
 
         public List<Vector2Int> AStar(Vector2Int start, Vector2Int goal)
@@ -130,20 +150,21 @@
                     return path;
                 }
 
-                for (int i = 1; i <= 4; ++i)
+                for (int i = 1; i <= 8; ++i)
                 {
                     Direction dir = (Direction)i;
                     Vector2Int neighbor = this.Actions(dir, current.Current);
                     if (neighbor.x == -1 || closedList.Contains(neighbor)) continue;
 
                     float tentativeG = gScore[current.Current.x, current.Current.y] + 1;
-
                     bool inOpenList = openList.Any(e => e.Current == neighbor);
 
                     if (!inOpenList || tentativeG < gScore[neighbor.x, neighbor.y])
                     {
                         gScore[neighbor.x, neighbor.y] = tentativeG;
-                        float fScore = tentativeG;
+                        Vector2 pos1 = new Vector2(current.Current.x, current.Current.y);
+                        Vector2 pos2 = new Vector2(neighbor.x, neighbor.y);
+                        float fScore = tentativeG + this.EuclideanDistance(pos1, pos2);
                         cameFrom[neighbor.x, neighbor.y] = current.Current;
 
                         if (!inOpenList)
@@ -181,6 +202,18 @@
                 case Direction.Right:
                     posDirection = new Vector2Int(0, 1);
                     break;
+                case Direction.UpLeft:
+                    posDirection = new Vector2Int(-1, -1);
+                    break;
+                case Direction.UpRight:
+                    posDirection = new Vector2Int(-1, 1);
+                    break;
+                case Direction.DownLeft:
+                    posDirection = new Vector2Int(1, -1);
+                    break;
+                case Direction.DownRight:
+                    posDirection = new Vector2Int(1, 1);
+                    break;
             }
 
             Vector2Int newPos = pos + posDirection;
@@ -188,11 +221,43 @@
             if (MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y - 1].Type == 1) 
                 return new Vector2Int(-1, -1);
 
+            if (dir == Direction.UpLeft &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y].Type == 1 &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x, newPos.y - 1].Type == 1
+                )
+            {
+                return new Vector2Int(-1, -1);
+            }
+
+            if (dir == Direction.UpRight &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y - 2].Type == 1 &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x, newPos.y - 1].Type == 1
+                )
+            {
+                return new Vector2Int(-1, -1);
+            }
+
+            if (dir == Direction.DownLeft &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x - 2, newPos.y - 1].Type == 1 &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y].Type == 1
+                )
+            {
+                return new Vector2Int(-1, -1);
+            }
+
+            if (dir == Direction.DownRight &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x - 2, newPos.y - 1].Type == 1 &&
+                    MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y - 2].Type == 1
+                )
+            {
+                return new Vector2Int(-1, -1);
+            }
+
             return newPos;
         }
 
 
-        IEnumerator MovePath(List<Vector2Int> path)
+        IEnumerator MovePath(int index, List<Vector2Int> path)
         {
             this._isMoving = true;
             for (int i = path.Count - 1; i >= 0; i--) 
@@ -200,38 +265,24 @@
                 Vector2Int newPos = path[i]; 
                 if (MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y - 1].Type != 1)
                 {
-                    this.EnemyModelList[0].SetPosition(newPos);
-                    yield return new WaitForSeconds(0.2f);
+                    float time = 0.2f;
+                    bool check = EnemyModelList.Any(m => m.Position == newPos && EnemyModelList.IndexOf(m) != index);
+
+                    if (check)
+                    {
+                        time = 0.3f;
+                        yield return new WaitForSeconds(time);
+                        this.EnemyModelList[index].SetPosition(newPos);
+                    }
+                    else
+                    {
+                        time = 0.2f;
+                        this.EnemyModelList[index].SetPosition(newPos);
+                        yield return new WaitForSeconds(time);
+                    }
                 }
             }
             this._isMoving = false;
-        }
-
-        public void Move(Direction dir, int index)
-        {
-            Vector2Int posDirection = new Vector2Int(0, 0);
-
-            switch (dir)
-            {
-                case Direction.Up:
-                    posDirection = new Vector2Int(-1, 0);
-                    break;
-                case Direction.Down:
-                    posDirection = new Vector2Int(1, 0);
-                    break;
-                case Direction.Left:
-                    posDirection = new Vector2Int(0, -1);
-                    break;
-                case Direction.Right:
-                    posDirection = new Vector2Int(0, 1);
-                    break;
-            }
-
-            Vector2Int newPos = this.EnemyModelList[index].Position + posDirection;
-
-            if (MatrixController.Instance.MatrixElementModelList[newPos.x - 1, newPos.y - 1].Type == 1) return;
-
-            this.EnemyModelList[0].SetPosition(newPos);
         }
     }
 }

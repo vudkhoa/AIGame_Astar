@@ -53,7 +53,7 @@ namespace CoreGamePlay.Controller
                     this.MatrixElementModelList[i, j] = elementModel;
                 }
             }
-            EnemyController.Instance.SpawnEnemy();
+            EnemyController.Instance.SpawnListEnemy();
             PlayerController.Instance.SpawnPlayer();
         }
     }

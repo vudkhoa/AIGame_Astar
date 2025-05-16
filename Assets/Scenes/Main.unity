@@ -19903,6 +19903,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyViewPrefab: {fileID: 3493051571604965683, guid: 13d8b3edf32c85048a1900f2cbb11e89, type: 3}
   parent: {fileID: 1003191679}
+  SizeEnemyModelList: 3
 --- !u!114 &1003191683
 MonoBehaviour:
   m_ObjectHideFlags: 0

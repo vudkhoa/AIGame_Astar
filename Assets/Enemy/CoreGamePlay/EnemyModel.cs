@@ -1,4 +1,4 @@
-namespace CoreGmePlay.Model
+namespace CoreGamePlay.Model
 {
     using CoreGamePlay.View;
     using UnityEngine;

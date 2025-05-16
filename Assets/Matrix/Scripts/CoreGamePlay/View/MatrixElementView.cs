@@ -6,7 +6,6 @@ namespace CoreGamePlay.View
     public class MatrixElementView : MonoBehaviour
     {
         public Image Image;
-
         public void SetColor(int type)
         {
             if (type == 1)
